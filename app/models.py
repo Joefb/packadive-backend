@@ -40,7 +40,7 @@ class CheckList(Base):
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="checklists")
     list_items: Mapped[list["ListItems"]] = relationship(
-        "ListItems", back_populates="checklist"
+        "ListItems", back_populates="checklist_items"
     )
 
 
