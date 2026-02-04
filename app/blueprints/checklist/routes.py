@@ -81,3 +81,24 @@ def update_checklist(checklist_id):
     db.session.commit()
 
     return checklist_schema.jsonify(checklist), 200
+
+
+# delete check list for logged in user
+@checklist_bp.route("/<int:checklist_id>", methods=["DELETE"])
+@auth_token_required
+def delete_checklist(checklist_id):
+    current_user_id = request.logged_in_id
+
+    checklist = (
+        db.session.query(CheckList)
+        .filter_by(id=checklist_id, user_id=current_user_id)
+        .first()
+    )
+
+    if not checklist:
+        return jsonify({"message": "Check list not found"}), 404
+
+    db.session.delete(checklist)
+    db.session.commit()
+
+    return jsonify({"message": "Check list deleted"}), 200
