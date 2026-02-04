@@ -32,9 +32,7 @@ class CheckList(Base):
     __tablename__ = "checklists"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    checklist_name: Mapped[str] = mapped_column(
-        String(100), nullable=False, unique=True
-    )
+    checklist_name: Mapped[str] = mapped_column(String(100), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
 
     # Relationships

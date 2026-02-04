@@ -4,7 +4,7 @@ from .models import db
 from .extensions import ma, limiter, cache
 from .blueprints.user import user_bp
 from .blueprints.checklist import checklist_bp
-# from .blueprints.list_items import list_items_bp
+from .blueprints.list_item import list_item_bp
 
 ## Swagger Setup
 # from flask_swagger_ui import get_swaggerui_blueprint
@@ -31,7 +31,7 @@ def create_app(config_name):
     # Create prefixed blueprint routes
     app.register_blueprint(user_bp, url_prefix="/user")
     app.register_blueprint(checklist_bp, url_prefix="/checklists")
-    # app.register_blueprint(list_items_bp, url_prefix="/list_items")
+    app.register_blueprint(list_item_bp, url_prefix="/list_item")
     # app.register_blueprint(swagger_blueprint, url_prefix=SWAGGER_URL)
 
     # This creates the admin user if it does not exist.
