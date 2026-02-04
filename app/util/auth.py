@@ -8,11 +8,12 @@ from flask import request, jsonify
 SECRET_KEY = "3f2b4c6d8e0f1a"
 
 
-def encode_auth_token(user_id):
+def encode_auth_token(user_id, user_name):
     payload = {
         "exp": datetime.now(timezone.utc) + timedelta(days=0, hours=1),
         "iat": datetime.now(timezone.utc),
         "sub": str(user_id),
+        "user_name": user_name,
     }
 
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")

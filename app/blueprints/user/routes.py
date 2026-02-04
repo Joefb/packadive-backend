@@ -9,6 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app.util.auth import (
     encode_auth_token,
     auth_token_required,
+    admin_auth_token_required,
 )
 
 
@@ -24,7 +25,7 @@ def user_login():
 
     user = db.session.query(User).filter_by(user_name=data["user_name"]).first()
     if user and check_password_hash(user.password, data["password"]):
-        auth_token = encode_auth_token(user.id)
+        auth_token = encode_auth_token(user.id, user.user_name)
         return jsonify({"auth_token": auth_token}), 200
     else:
         return jsonify({"message": "Invalid username or password"}), 401
@@ -82,3 +83,62 @@ def update_logged_in_user():
 
     db.session.commit()
     return jsonify(user_schema.dump(curret_user)), 200
+
+
+## Admin Routes ##
+# update user by id. admin auth token required
+@user_bp.route("/<int:user_id>", methods=["PUT"])
+@admin_auth_token_required
+def update_user_by_id(user_id):
+    curret_user = db.session.get(User, user_id)
+
+    if not curret_user:
+        return jsonify({"message": "User not found"}), 404
+
+    try:
+        data = create_user_schema.load(request.json, partial=True)
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+
+    if "password" in data:
+        data["password"] = generate_password_hash(data["password"])
+
+    for key, value in data.items():
+        setattr(curret_user, key, value)
+
+    db.session.commit()
+    return jsonify(user_schema.dump(curret_user)), 200
+
+
+# get user by id. admin auth token required
+@user_bp.route("/<int:user_id>", methods=["GET"])
+@admin_auth_token_required
+def get_user_by_id(user_id):
+    curret_user = db.session.get(User, user_id)
+
+    if not curret_user:
+        return jsonify({"message": "User not found"}), 404
+
+    return user_schema.jsonify(curret_user), 200
+
+
+# get user list. admin auth token required
+@user_bp.route("/list", methods=["GET"])
+@admin_auth_token_required
+def get_user_list():
+    users = db.session.query(User).all()
+    return jsonify(user_schema.dump(users, many=True)), 200
+
+
+# delete user by id. admin auth token required
+@user_bp.route("/<int:user_id>", methods=["DELETE"])
+@admin_auth_token_required
+def delete_user_by_id(user_id):
+    curret_user = db.session.get(User, user_id)
+
+    if not curret_user:
+        return jsonify({"message": "User not found"}), 404
+
+    db.session.delete(curret_user)
+    db.session.commit()
+    return jsonify({"message": "User deleted successfully"}), 200
