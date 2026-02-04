@@ -1,5 +1,5 @@
 from app.models import db, CheckList
-from .schemas import checklist_schema, create_checklist_schema
+from .schemas import checklist_schema, checklists_schema
 from app.blueprints.checklist import checklist_bp
 from flask import request, jsonify
 from marshmallow import ValidationError
@@ -44,6 +44,13 @@ def create_checklist():
     return checklist_schema.jsonify(new_checklist), 201
 
 
+# get checklist by id for logged in user
+# @checklist_bp.route("/<int:checklist_id>", methods=["GET"])
+# @auth_token_required
+# def get_checklist_by_id():
+#     current_user_id = request.logged_in_id
+
+
 # get all check lists for logged in user
 @checklist_bp.route("", methods=["GET"])
 @auth_token_required
@@ -54,7 +61,7 @@ def get_checklists():
     if not checklists:
         return jsonify({"message": "No check lists found"}), 404
 
-    return checklist_schema.jsonify(checklists, many=True), 200
+    return checklists_schema.jsonify(checklists), 200
 
 
 # update check list name for logged in user

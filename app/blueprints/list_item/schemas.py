@@ -8,7 +8,7 @@ class ListItemsSchema(ma.SQLAlchemyAutoSchema):
 
     class Meta:
         model = ListItems
-        # load_instance = True
+        load_instance = True
 
 
 list_item_schema = ListItemsSchema()
