@@ -55,3 +55,29 @@ def get_checklists():
         return jsonify({"message": "No check lists found"}), 404
 
     return checklist_schema.jsonify(checklists, many=True), 200
+
+
+# update check list name for logged in user
+@checklist_bp.route("/<int:checklist_id>", methods=["PUT"])
+@auth_token_required
+def update_checklist(checklist_id):
+    try:
+        data = create_checklist_schema.load(request.json)
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+
+    current_user_id = request.logged_in_id
+
+    checklist = (
+        db.session.query(CheckList)
+        .filter_by(id=checklist_id, user_id=current_user_id)
+        .first()
+    )
+
+    if not checklist:
+        return jsonify({"message": "Check list not found"}), 404
+
+    checklist.checklist_name = data["checklist_name"]
+    db.session.commit()
+
+    return checklist_schema.jsonify(checklist), 200
