@@ -15,7 +15,7 @@ from app.util.auth import (
 ## USER ROUTES ##
 # user login
 @user_bp.route("/login", methods=["POST"])
-@limiter.limit("10 per minute")
+# @limiter.limit("10 per minute")
 def user_login():
     try:
         data = login_user_schema.load(request.json)
@@ -31,7 +31,7 @@ def user_login():
 
 
 # create new user
-@user_bp.route("/", methods=["POST"])
+@user_bp.route("", methods=["POST"])
 def create_user():
     try:
         data = create_user_schema.load(request.json)
@@ -48,3 +48,15 @@ def create_user():
     db.session.commit()
 
     return user_schema.jsonify(new_user), 201
+
+
+# delete logged in user
+@user_bp.route("", methods=["DELETE"])
+@auth_token_required
+def delete_logged_in_user():
+    current_user_id = request.logged_in_id
+    curret_user = db.session.get(User, current_user_id)
+
+    db.session.delete(curret_user)
+    db.session.commit()
+    return jsonify({"message": "User deleted successfully"}), 200
