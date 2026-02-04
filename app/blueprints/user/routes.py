@@ -28,3 +28,23 @@ def user_login():
         return jsonify({"auth_token": auth_token}), 200
     else:
         return jsonify({"message": "Invalid username or password"}), 401
+
+
+# create new user
+@user_bp.route("/", methods=["POST"])
+def create_user():
+    try:
+        data = create_user_schema.load(request.json)
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+
+    if db.session.query(User).filter_by(user_name=data["user_name"]).first():
+        return jsonify({"message": "Username already exists"}), 409
+
+    data["password"] = generate_password_hash(data["password"])
+    new_user = User(**data)
+
+    db.session.add(new_user)
+    db.session.commit()
+
+    return user_schema.jsonify(new_user), 201
