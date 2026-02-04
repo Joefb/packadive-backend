@@ -60,3 +60,25 @@ def delete_logged_in_user():
     db.session.delete(curret_user)
     db.session.commit()
     return jsonify({"message": "User deleted successfully"}), 200
+
+
+# update logged in user
+@user_bp.route("", methods=["PUT"])
+@auth_token_required
+def update_logged_in_user():
+    current_user_id = request.logged_in_id
+    curret_user = db.session.get(User, current_user_id)
+
+    try:
+        data = create_user_schema.load(request.json, partial=True)
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+
+    if "password" in data:
+        data["password"] = generate_password_hash(data["password"])
+
+    for key, value in data.items():
+        setattr(curret_user, key, value)
+
+    db.session.commit()
+    return jsonify(user_schema.dump(curret_user)), 200
