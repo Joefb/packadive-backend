@@ -29,7 +29,7 @@ class User(Base):
 
 
 class CheckList(Base):
-    __tablename__ = "check_lists"
+    __tablename__ = "checklists"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     checklist_name: Mapped[str] = mapped_column(
@@ -51,7 +51,7 @@ class ListItems(Base):
     item_name: Mapped[str] = mapped_column(String(100), nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False)
     checklist_id: Mapped[int] = mapped_column(
-        ForeignKey("check_lists.id"), nullable=False
+        ForeignKey("checklists.id"), nullable=False
     )
 
     # Relationship

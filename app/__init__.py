@@ -3,7 +3,7 @@ from flask import Flask
 from .models import db
 from .extensions import ma, limiter, cache
 from .blueprints.user import user_bp
-# from .blueprints.check_list import check_list_bp
+from .blueprints.checklist import checklist_bp
 # from .blueprints.list_items import list_items_bp
 
 ## Swagger Setup
@@ -30,7 +30,7 @@ def create_app(config_name):
 
     # Create prefixed blueprint routes
     app.register_blueprint(user_bp, url_prefix="/user")
-    # app.register_blueprint(check_list_bp, url_prefix="/check_list")
+    app.register_blueprint(checklist_bp, url_prefix="/checklists")
     # app.register_blueprint(list_items_bp, url_prefix="/list_items")
     # app.register_blueprint(swagger_blueprint, url_prefix=SWAGGER_URL)
 

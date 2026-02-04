@@ -7,5 +7,5 @@ class CheckListSchema(ma.SQLAlchemyAutoSchema):
         model = CheckList
 
 
-check_list_schema = CheckListSchema()
-create_check_list_schema = CheckListSchema()
+checklist_schema = CheckListSchema()
+create_checklist_schema = CheckListSchema()
