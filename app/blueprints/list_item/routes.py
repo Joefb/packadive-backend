@@ -63,3 +63,27 @@ def update_list_item(list_item_id):
 
     db.session.commit()
     return list_item_schema.jsonify(list_item), 200
+
+
+@list_item_bp.route("/<int:list_item_id>", methods=["DELETE"])
+@auth_token_required
+def delete_list_item(list_item_id):
+    try:
+        list_item = db.session.get(ListItems, list_item_id)
+        if not list_item:
+            return jsonify({"message": "Item not found"}), 404
+
+        if list_item.checklist_id is None:
+            return jsonify({"message": "Unauthorized"}), 403
+
+        checklist = db.session.get(CheckList, list_item.checklist_id)
+
+        if not checklist or int(checklist.user_id) != int(request.logged_in_id):
+            return jsonify({"message": "Unauthorized"}), 403
+
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+
+    db.session.delete(list_item)
+    db.session.commit()
+    return jsonify({"message": "Item deleted"}), 200
