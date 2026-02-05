@@ -1,7 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, Float, ForeignKey, Table, Column, Date
-## from datetime import date
+from sqlalchemy import String, ForeignKey
 
 
 # Create a base class for our models

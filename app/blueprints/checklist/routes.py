@@ -4,12 +4,9 @@ from app.blueprints.checklist import checklist_bp
 from flask import request, jsonify
 from marshmallow import ValidationError
 from app.extensions import limiter
-from werkzeug.security import generate_password_hash, check_password_hash
 
 from app.util.auth import (
-    encode_auth_token,
     auth_token_required,
-    admin_auth_token_required,
 )
 
 

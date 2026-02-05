@@ -4,12 +4,9 @@ from app.blueprints.list_item import list_item_bp
 from flask import request, jsonify
 from marshmallow import ValidationError
 from app.extensions import limiter
-from werkzeug.security import generate_password_hash, check_password_hash
 
 from app.util.auth import (
-    encode_auth_token,
     auth_token_required,
-    admin_auth_token_required,
 )
 
 
@@ -65,6 +62,7 @@ def update_list_item(list_item_id):
     return list_item_schema.jsonify(list_item), 200
 
 
+# delete list item
 @list_item_bp.route("/<int:list_item_id>", methods=["DELETE"])
 @auth_token_required
 def delete_list_item(list_item_id):

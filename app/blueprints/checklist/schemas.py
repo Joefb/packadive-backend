@@ -5,7 +5,6 @@ from marshmallow import fields
 
 
 class CheckListSchema(ma.SQLAlchemyAutoSchema):
-    # list_items = fields.Nested(ListItemsSchema, many=True, dump_only=True)
     list_items = fields.Nested(ListItemsSchema, many=True)
 
     class Meta:
