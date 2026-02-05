@@ -12,4 +12,3 @@ class ListItemsSchema(ma.SQLAlchemyAutoSchema):
 
 
 list_item_schema = ListItemsSchema()
-create_list_item_schema = ListItemsSchema()
