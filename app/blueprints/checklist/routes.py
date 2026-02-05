@@ -44,13 +44,6 @@ def create_checklist():
     return checklist_schema.jsonify(new_checklist), 201
 
 
-# get checklist by id for logged in user
-# @checklist_bp.route("/<int:checklist_id>", methods=["GET"])
-# @auth_token_required
-# def get_checklist_by_id():
-#     current_user_id = request.logged_in_id
-
-
 # get all check lists for logged in user
 @checklist_bp.route("", methods=["GET"])
 @auth_token_required

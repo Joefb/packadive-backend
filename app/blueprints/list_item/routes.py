@@ -16,6 +16,7 @@ from app.util.auth import (
 ## list items ROUTES ##
 
 
+# create new item
 @list_item_bp.route("", methods=["POST"])
 @auth_token_required
 def create_list_item():
@@ -34,3 +35,10 @@ def create_list_item():
     db.session.commit()
 
     return list_item_schema.jsonify(new_list_item), 201
+
+
+# update list item
+@list_item_bp.route("/<int:list_item_id>", methods=["PUT"])
+@auth_token_required
+def update_list_item():
+    pass
