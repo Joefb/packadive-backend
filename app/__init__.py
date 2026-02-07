@@ -5,6 +5,7 @@ from .extensions import ma, limiter, cache
 from .blueprints.user import user_bp
 from .blueprints.checklist import checklist_bp
 from .blueprints.list_item import list_item_bp
+from flask_cors import CORS
 
 ## Swagger Setup
 # from flask_swagger_ui import get_swaggerui_blueprint
@@ -27,6 +28,7 @@ def create_app(config_name):
     ma.init_app(app)  # This adds Marshmallow to the app.
     limiter.init_app(app)
     cache.init_app(app)
+    CORS(app)  # Enable CORS for all routes
 
     # Create prefixed blueprint routes
     app.register_blueprint(user_bp, url_prefix="/user")
