@@ -1,5 +1,10 @@
 from app.models import db, User
-from .schemas import user_schema, create_user_schema, login_user_schema
+from .schemas import (
+    user_schema,
+    create_user_schema,
+    login_user_schema,
+    user_return_schema,
+)
 from app.blueprints.user import user_bp
 from flask import request, jsonify
 from marshmallow import ValidationError
@@ -26,7 +31,9 @@ def user_login():
     user = db.session.query(User).filter_by(user_name=data["user_name"]).first()
     if user and check_password_hash(user.password, data["password"]):
         auth_token = encode_auth_token(user.id, user.user_name)
-        return jsonify({"auth_token": auth_token}), 200
+        return jsonify(
+            {"auth_token": auth_token, "user": user_return_schema.dump(user)}
+        ), 200
     else:
         return jsonify({"message": "Invalid username or password"}), 401
 

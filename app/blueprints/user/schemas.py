@@ -12,3 +12,4 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
 user_schema = UserSchema()
 create_user_schema = UserSchema()
 login_user_schema = UserSchema(only=("user_name", "password"))
+user_return_schema = UserSchema(exclude=("password",))
