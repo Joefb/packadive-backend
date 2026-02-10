@@ -23,9 +23,9 @@ def create_list_item():
         return jsonify(err.messages), 400
 
     new_list_item = ListItems(
-        item_name=data["item_name"],
-        status=data["status"],
-        checklist_id=data["checklist_id"],
+        item_name=data.item_name,
+        status=data.status,
+        checklist_id=data.checklist_id,
     )
 
     db.session.add(new_list_item)
