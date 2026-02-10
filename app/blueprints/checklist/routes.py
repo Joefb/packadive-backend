@@ -18,7 +18,7 @@ from app.util.auth import (
 @auth_token_required
 def create_checklist():
     try:
-        data = create_checklist_schema.load(request.json)
+        data = checklist_schema.load(request.json)
     except ValidationError as err:
         return jsonify(err.messages), 400
 
@@ -59,7 +59,7 @@ def get_checklists():
 @auth_token_required
 def update_checklist(checklist_id):
     try:
-        data = create_checklist_schema.load(request.json)
+        data = checklist_schema.load(request.json)
     except ValidationError as err:
         return jsonify(err.messages), 400
 

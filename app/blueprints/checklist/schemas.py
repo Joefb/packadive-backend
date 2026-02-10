@@ -13,4 +13,3 @@ class CheckListSchema(ma.SQLAlchemyAutoSchema):
 
 checklist_schema = CheckListSchema()
 checklists_schema = CheckListSchema(many=True)
-create_checklist_schema = CheckListSchema()
