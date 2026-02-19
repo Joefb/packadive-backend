@@ -5,7 +5,7 @@ import jose
 from functools import wraps
 from flask import request, jsonify
 
-SECRET_KEY = "3f2b4c6d8e0f1a"
+SECRET_KEY = os.environ.get("SECRET_KEY") or "super secret key"
 
 
 def encode_auth_token(user_id, user_name):
