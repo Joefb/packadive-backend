@@ -21,7 +21,7 @@ from app.util.auth import (
 ## USER ROUTES ##
 # user login
 @user_bp.route("/login", methods=["POST"])
-# @limiter.limit("10 per minute")
+@limiter.limit("5 per minute")
 def user_login():
     try:
         data = login_user_schema.load(request.json)
@@ -40,6 +40,7 @@ def user_login():
 
 # create new user
 @user_bp.route("", methods=["POST"])
+@limiter.limit("3 per hour")
 def create_user():
     try:
         data = create_user_schema.load(request.json)
@@ -61,6 +62,7 @@ def create_user():
 # delete logged in user
 @user_bp.route("", methods=["DELETE"])
 @auth_token_required
+@limiter.limit("5 per hour")
 def delete_logged_in_user():
     current_user_id = request.logged_in_id
     curret_user = db.session.get(User, current_user_id)
@@ -73,6 +75,7 @@ def delete_logged_in_user():
 # update logged in user
 @user_bp.route("", methods=["PUT"])
 @auth_token_required
+@limiter.limit("30 per hour")
 def update_logged_in_user():
     current_user_id = request.logged_in_id
     curret_user = db.session.get(User, current_user_id)
@@ -96,6 +99,7 @@ def update_logged_in_user():
 # update user by id. admin auth token required
 @user_bp.route("/<int:user_id>", methods=["PUT"])
 @admin_auth_token_required
+@limiter.limit("100 per hour")
 def update_user_by_id(user_id):
     curret_user = db.session.get(User, user_id)
 
@@ -132,6 +136,7 @@ def get_user_by_id(user_id):
 # get user list. admin auth token required
 @user_bp.route("/list", methods=["GET"])
 @admin_auth_token_required
+@limiter.limit("100 per hour")
 def get_user_list():
     users = db.session.query(User).all()
     return jsonify(user_schema.dump(users, many=True)), 200
@@ -140,6 +145,7 @@ def get_user_list():
 # delete user by id. admin auth token required
 @user_bp.route("/<int:user_id>", methods=["DELETE"])
 @admin_auth_token_required
+@limiter.limit("50 per hour")
 def delete_user_by_id(user_id):
     curret_user = db.session.get(User, user_id)
 
