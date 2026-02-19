@@ -38,17 +38,17 @@ def create_app(config_name):
 
     # This creates the admin user if it does not exist.
     # This is a hard coded password! Change the admin password after first run!
-    with app.app_context():
-        from app.models import User
-        from werkzeug.security import generate_password_hash
-
-        if not db.session.query(User).filter_by(user_name="admin").first():
-            admin_user = User(
-                email="admin@admin.com",
-                user_name="admin",
-                password=generate_password_hash("password"),
-            )
-            db.session.add(admin_user)
-            db.session.commit()
+    # with app.app_context():
+    #     from app.models import User
+    #     from werkzeug.security import generate_password_hash
+    #
+    #     if not db.session.query(User).filter_by(user_name="admin").first():
+    #         admin_user = User(
+    #             email="admin@admin.com",
+    #             user_name="admin",
+    #             password=generate_password_hash("password"),
+    #         )
+    #         db.session.add(admin_user)
+    #         db.session.commit()
 
     return app
