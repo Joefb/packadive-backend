@@ -48,9 +48,6 @@ def get_checklists():
     current_user_id = request.logged_in_id
     checklists = db.session.query(CheckList).filter_by(user_id=current_user_id).all()
 
-    if not checklists:
-        return jsonify({"message": "No check lists found"}), 404
-
     return checklists_schema.jsonify(checklists), 200
 
 
