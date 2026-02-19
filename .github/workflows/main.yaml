@@ -4,7 +4,6 @@ on: #Trigger whenever there is a push to my main or master branch
   push:
     # Triggers on any push to any branch
     branches: ['**']
-    branches: [feature-CICD]
   pull_request:
     # Triggers on PRs targeting main
     branches: [main, master]
