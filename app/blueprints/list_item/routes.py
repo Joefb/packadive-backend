@@ -16,6 +16,7 @@ from app.util.auth import (
 # create new item
 @list_item_bp.route("", methods=["POST"])
 @auth_token_required
+@limiter.limit("60 per minute")
 def create_list_item():
     try:
         data = list_item_schema.load(request.json)
@@ -37,6 +38,7 @@ def create_list_item():
 # update list item
 @list_item_bp.route("/<int:list_item_id>", methods=["PUT"])
 @auth_token_required
+@limiter.limit("120 per minute")
 def update_list_item(list_item_id):
     try:
         list_item = db.session.get(ListItems, list_item_id)
@@ -65,6 +67,7 @@ def update_list_item(list_item_id):
 # delete list item
 @list_item_bp.route("/<int:list_item_id>", methods=["DELETE"])
 @auth_token_required
+@limiter.limit("60 per minute")
 def delete_list_item(list_item_id):
     try:
         list_item = db.session.get(ListItems, list_item_id)

@@ -16,6 +16,7 @@ from app.util.auth import (
 # create new check list for current logged in user
 @checklist_bp.route("", methods=["POST"])
 @auth_token_required
+@limiter.limit("30 per hour")
 def create_checklist():
     try:
         data = checklist_schema.load(request.json)
@@ -44,6 +45,7 @@ def create_checklist():
 # get all check lists for logged in user
 @checklist_bp.route("", methods=["GET"])
 @auth_token_required
+@limiter.limit("100 per minute")
 def get_checklists():
     current_user_id = request.logged_in_id
     checklists = db.session.query(CheckList).filter_by(user_id=current_user_id).all()
@@ -54,6 +56,7 @@ def get_checklists():
 # update check list name for logged in user
 @checklist_bp.route("/<int:checklist_id>", methods=["PUT"])
 @auth_token_required
+@limiter.limit("60 per hour")
 def update_checklist(checklist_id):
     try:
         data = checklist_schema.load(request.json)
@@ -80,6 +83,7 @@ def update_checklist(checklist_id):
 # delete check list for logged in user
 @checklist_bp.route("/<int:checklist_id>", methods=["DELETE"])
 @auth_token_required
+@limiter.limit("30 per hour")
 def delete_checklist(checklist_id):
     current_user_id = request.logged_in_id
 
