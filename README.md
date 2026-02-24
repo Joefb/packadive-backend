@@ -1,232 +1,270 @@
-# Packadive Backend
+# Packadive Backend (Flask API)
 
-Backend API for packadive - a checklist management application for dive trip planning.
+> Backend API for **Packadive** — a dive-trip packing and checklist application.
 
-## Description
+**Live API (Render):** <https://packadive-backend.onrender.com>  
+**Live Frontend (Vercel):** <https://packadive.vercel.app/>  
+**Frontend Repo:** <https://github.com/Joefb/packadive>
 
-Packadive Backend is a Flask-based REST API that provides user authentication, checklist management, and list item tracking functionality. Built with SQLAlchemy for database operations and includes features like rate limiting, caching, and API documentation support.
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [API Base URL](#api-base-url)
+- [Authentication (JWT)](#authentication-jwt)
+- [Main Routes (High Level)](#main-routes-high-level)
+- [Database Schema (High Level)](#database-schema-high-level)
+- [Local Development](#local-development)
+- [CORS](#cors)
+- [End-to-End Run (Frontend + Backend)](#end-to-end-run-frontend--backend)
+- [Production](#production)
+- [Project Structure](#project-structure)
+- [Security Notes](#security-notes)
+- [License](#license)
+- [Contact](#contact)
+
+---
+
+## Overview
+
+Packadive Backend is a **Flask REST API** that powers authentication and checklist functionality for the Packadive frontend. It supports user accounts, checklist CRUD, list item status tracking, and includes production-minded features like rate limiting and caching.
+
+---
 
 ## Features
 
-- **User Management**: User registration, authentication, and profile management
-- **Checklist Management**: Create, read, update, and delete checklists
-- **List Items**: Manage individual items within checklists with status tracking
+- **User Management**: registration, authentication, and profile management
+- **Checklist Management**: create, read, update, delete checklists
+- **List Items**: manage items within a checklist, including status tracking
+- **JWT Authentication**: signed tokens
 - **Rate Limiting**: API rate limiting to prevent abuse
-- **Caching**: Response caching for improved performance
-- **Database**: PostgreSQL support with SQLAlchemy ORM
-- **Security**: Password hashing with Werkzeug
+- **Caching**: response caching for improved performance
+- **CORS Enabled**: allows the deployed Vercel frontend to call this API
 - **API Documentation**: Swagger/OpenAPI support (configurable)
 
-## Technology Stack
+---
 
-- **Framework**: Flask 3.1.2
-- **Database ORM**: SQLAlchemy 2.0.44 with Flask-SQLAlchemy 3.1.1
-- **Serialization**: Marshmallow 4.1.0 with flask-marshmallow 1.3.0
-- **Database**: PostgreSQL (psycopg2-binary 2.9.11)
-- **Authentication**: python-jose 3.5.0 for JWT tokens
-- **Rate Limiting**: Flask-Limiter 4.0.0
-- **Caching**: Flask-Caching 2.3.1
-- **Server**: Gunicorn 23.0.0
+## Tech Stack
 
-## Database Schema
+- **Framework:** Flask 3.1.2
+- **ORM:** SQLAlchemy 2.0.44 + Flask-SQLAlchemy 3.1.1
+- **Serialization:** Marshmallow 4.1.0 + flask-marshmallow 1.3.0
+- **Database:** PostgreSQL (production), SQLite (development/testing)
+- **Auth:** python-jose 3.5.0 (JWT)
+- **Rate Limiting:** Flask-Limiter 4.0.0
+- **Caching:** Flask-Caching 2.3.1
+- **Server:** Gunicorn 23.0.0
+
+---
+
+## API Base URL
+
+- Production: `https://packadive-backend.onrender.com`
+- Local (default Flask): `http://127.0.0.1:5000`
+
+---
+
+## Authentication (JWT)
+
+Protected endpoints expect a header like:
+
+```http
+Authorization: Bearer <your_token_here>
+```
+
+Tokens are signed and verified using `SECRET_KEY`.
+
+---
+
+## Main Routes (High Level)
+
+Base paths (registered as Flask blueprints):
+
+- `/user` — registration, login, profile management
+- `/checklists` — checklist CRUD and user checklist listing
+- `/list_item` — checklist item CRUD + status updates
+
+---
+
+## Database Schema (High Level)
 
 ### User
 
-- `id`: Primary key
-- `user_name`: Unique username (max 50 chars)
-- `password`: Hashed password (max 100 chars)
-- `email`: Unique email address (max 100 chars)
-- Relationships: One-to-many with CheckList
+- `id` (PK)
+- `user_name` (unique)
+- `password` (hashed)
+- `email` (unique)
+- Relationship: one user → many checklists
 
 ### CheckList
 
-- `id`: Primary key
-- `checklist_name`: Name of the checklist (max 100 chars)
-- `user_id`: Foreign key to User
-- Relationships: Many-to-one with User, One-to-many with ListItems
+- `id` (PK)
+- `checklist_name`
+- `user_id` (FK → User)
+- Relationship: one checklist → many list items
 
 ### ListItems
 
-- `id`: Primary key
-- `item_name`: Name of the item (max 100 chars)
-- `status`: Status of the item (max 20 chars)
-- `checklist_id`: Foreign key to CheckList
-- Relationships: Many-to-one with CheckList
+- `id` (PK)
+- `item_name`
+- `status`
+- `checklist_id` (FK → CheckList)
 
-## Installation
+---
+
+## Local Development
 
 ### Prerequisites
 
 - Python 3.8+
-- PostgreSQL database
+- (Optional) PostgreSQL if you want to run against Postgres locally
 
 ### Setup
-
-1. Clone the repository:
 
 ```bash
 git clone https://github.com/Joefb/packadive-backend.git
 cd packadive-backend
-```
-
-1. Create a virtual environment:
-
-```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-1. Install dependencies:
-
-```bash
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-1. Configure environment variables (create a `.env` file or set them in your environment):
+### Configuration / Environment Variables
+
+#### Required
+
+- `SECRET_KEY` — used to sign and verify JWT tokens
+
+#### Database
+
+This project supports SQLite by default for development, and Postgres in production.
+
+**Important note about variable names:**
+
+- Some docs refer to `DATABASE_URL`
+- The current `config.py` uses `SQLALCHEMY_DATABASE_URI` (especially in `ProductionConfig`)
+
+Recommended dev env:
 
 ```bash
-export FLASK_APP=planadive.py
-export FLASK_ENV=development  # or production
-export DATABASE_URL=postgresql://username:password@localhost/dbname
+export SECRET_KEY=dev-secret
+export SQLALCHEMY_DATABASE_URI=sqlite:///app.db
 ```
 
-1. Initialize the database:
-
-```bash
-flask db upgrade  # If using Flask-Migrate
-# Or the database will be initialized on first run
-```
-
-## Running the Application
-
-### Development Mode
+Run:
 
 ```bash
 python planadive.py
 ```
 
-The application will create a default admin user on first run:
+---
 
-- **Username**: `admin`
-- **Password**: `password`
-- **Email**: `admin@admin.com`
+## CORS
 
-⚠️ **Security Warning**: Change the admin password immediately after first run!
+CORS is enabled in the Flask app (via `flask_cors.CORS(app)`), allowing the Vercel frontend to call the API.
 
-### Production Mode
+If you ever want to restrict origins (more secure), configure CORS to only allow:
+
+- `https://packadive.vercel.app`
+
+---
+
+## End-to-End Run (Frontend + Backend)
+
+### Option A — Use deployed backend (fastest)
+
+- API: <https://packadive-backend.onrender.com>
+- Start frontend locally:
+
+```bash
+git clone https://github.com/Joefb/packadive.git
+cd packadive
+npm install
+npm run dev
+```
+
+Then:
+
+- Sign up / log in
+- Create checklist → add items → toggle status
+- Use Dive Conditions page for weather/forecast
+
+### Option B — Run everything locally
+
+1) Start backend:
+
+```bash
+python planadive.py
+```
+
+1) Start frontend:
+
+```bash
+npm run dev
+```
+
+1) Confirm:
+
+- Auth works (JWT)
+- CRUD works for checklists/items
+- Status updates persist
+
+---
+
+## Production
+
+Example Gunicorn command:
 
 ```bash
 gunicorn -w 4 -b 0.0.0.0:8000 "app:create_app('production')"
 ```
 
-## API Endpoints
+> Note: `planadive.py` currently creates the app with `ProductionConfig` and creates tables on startup. That’s fine for a capstone deployment; larger systems typically use migrations in CI/CD.
 
-### User Endpoints (`/user`)
-
-- User registration, login, and profile management
-
-### Checklist Endpoints (`/checklists`)
-
-- Create, read, update, and delete checklists
-- List all checklists for a user
-
-### List Item Endpoints (`/list_item`)
-
-- Manage items within checklists
-- Update item status
-
-## Configuration
-
-The application uses configuration classes defined in `config.py`. Available configurations:
-
-- Development
-- Production
-- Testing (if configured)
+---
 
 ## Project Structure
 
-```
+```text
 packadive-backend/
 ├── app/
-│   ├── __init__.py          # Flask app factory
-│   ├── models.py            # Database models
-│   ├── extensions.py        # Flask extensions initialization
+│   ├── __init__.py          # Flask app factory + blueprint registration + CORS
+│   ├── models.py            # SQLAlchemy models
+│   ├── extensions.py        # Marshmallow, Limiter, Cache initialization
 │   ├── blueprints/          # API route blueprints
-│   │   ├── user.py
-│   │   ├── checklist.py
-│   │   └── list_item.py
-│   ├── util/                # Utility functions
-│   └── static/              # Static files (Swagger specs, etc.)
-├── instance/                # Instance-specific files (database, etc.)
-├── config.py                # Configuration settings
-├── planadive.py             # Application entry point
-├── requirements.txt         # Python dependencies
+│   │   ├── user/
+│   │   ├── checklist/
+│   │   └── list_item/
+│   ├── util/                # auth utilities, helpers
+│   └── static/              # Swagger specs, etc. (optional)
+├── instance/
+├── config.py
+├── planadive.py
+├── requirements.txt
 └── README.md
 ```
 
-## Development
+---
 
-### Adding New Features
+## Security Notes
 
-1. Create new models in `app/models.py`
-2. Create new blueprints in `app/blueprints/`
-3. Register blueprints in `app/__init__.py`
-4. Update configuration in `config.py` as needed
+- Use a strong `SECRET_KEY` in production.
+- Prefer HTTPS (Render provides HTTPS).
+- Rate limiting is enabled — tune limits as needed.
+- Avoid hard-coded credentials if you ever re-enable “default admin” logic.
 
-### Database Migrations
-
-If using Flask-Migrate:
-
-```bash
-flask db migrate -m "Description of changes"
-flask db upgrade
-```
-
-## Security Considerations
-
-- Change the default admin password immediately
-- Use environment variables for sensitive configuration
-- Enable HTTPS in production
-- Configure rate limiting appropriately for your use case
-- Use strong secret keys for JWT tokens
-- Regularly update dependencies
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+---
 
 ## License
 
-This project is licensed under the MIT License - see below for details.
+MIT License © 2026 Joefb
 
-MIT License
-
-Copyright (c) 2026 Joefb
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+---
 
 ## Contact
 
-Project Owner: [Joefb](https://github.com/Joefb)
-
-Project Link: [https://github.com/Joefb/packadive-backend](https://github.com/Joefb/packadive-backend)
+Project Owner: [Joefb](https://github.com/Joefb)  
+Project Link: <https://github.com/Joefb/packadive-backend>
