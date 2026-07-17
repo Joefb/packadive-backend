@@ -56,7 +56,7 @@ def create_user():
     db.session.add(new_user)
     db.session.commit()
 
-    return user_schema.jsonify(new_user), 201
+    return user_return_schema.jsonify(new_user), 201
 
 
 # delete logged in user
@@ -92,7 +92,7 @@ def update_logged_in_user():
         setattr(curret_user, key, value)
 
     db.session.commit()
-    return jsonify(user_schema.dump(curret_user)), 200
+    return jsonify(user_return_schema.dump(curret_user)), 200
 
 
 ## Admin Routes ##
@@ -118,7 +118,7 @@ def update_user_by_id(user_id):
         setattr(curret_user, key, value)
 
     db.session.commit()
-    return jsonify(user_schema.dump(curret_user)), 200
+    return jsonify(user_return_schema.dump(curret_user)), 200
 
 
 # get user by id. admin auth token required
@@ -130,7 +130,7 @@ def get_user_by_id(user_id):
     if not curret_user:
         return jsonify({"message": "User not found"}), 404
 
-    return user_schema.jsonify(curret_user), 200
+    return user_return_schema.jsonify(curret_user), 200
 
 
 # get user list. admin auth token required
@@ -139,7 +139,7 @@ def get_user_by_id(user_id):
 @limiter.limit("100 per hour")
 def get_user_list():
     users = db.session.query(User).all()
-    return jsonify(user_schema.dump(users, many=True)), 200
+    return jsonify(user_return_schema.dump(users, many=True)), 200
 
 
 # delete user by id. admin auth token required
