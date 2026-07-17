@@ -2,8 +2,8 @@
 
 > Backend API for **Packadive** — a dive-trip packing and checklist application.
 
-**Live API (Render):** <https://packadive-backend.onrender.com>  
-**Live Frontend (Vercel):** <https://packadive.vercel.app/>  
+**Live API (Render):** <https://api.packadive.com>
+**Live Frontend (Vercel):** <https://packadive.vercel.app/>
 **Frontend Repo:** <https://github.com/Joefb/packadive>
 
 ---
@@ -216,14 +216,33 @@ npm run dev
 
 ## Production
 
-Example Gunicorn command:
+## Production
+
+[#production](#production)
+
+The API runs in a Podman container on a self-hosted server, with Postgres running in a separate rootless Podman container on the same private network. Public access is provided via a Cloudflare Tunnel — no inbound ports are opened on the host.
+
+### Container build
+
+The image is built from the included `Dockerfile`:
 
 ```bash
-gunicorn -w 4 -b 0.0.0.0:8000 "app:create_app('production')"
+podman build -t packadive-backend:latest .
 ```
 
-> Note: `planadive.py` currently creates the app with `ProductionConfig` and creates tables on startup. That’s fine for a capstone deployment; larger systems typically use migrations in CI/CD.
+`entrypoint.sh` runs once on container start to create tables via `planadive.py`, then hands off to Gunicorn:
 
+```bash
+gunicorn -w 4 -b 0.0.0.0:8000 "app:create_app('ProductionConfig')"
+```
+
+> Note: `planadive.py` creates tables on startup rather than using migrations. That's fine for a project at this scale; larger systems typically use migrations in CI/CD.
+
+### Auto-deploy
+
+`deploy.sh` polls `origin/main` on a 5-minute systemd timer. When new commits are detected, it pulls, rebuilds the image, and restarts the API container via `systemctl --user restart`.
+
+**Note:** `deploy.sh` currently hardcodes the repo's absolute path (`/home/joefb/services/packadive-backend`). If this deployment is ever moved to a different host or path, update `REPO_DIR` in `deploy.sh` accordingly
 ---
 
 ## Project Structure
@@ -251,10 +270,13 @@ packadive-backend/
 
 ## Security Notes
 
+[#security-notes](#security-notes)
+
 - Use a strong `SECRET_KEY` in production.
-- Prefer HTTPS (Render provides HTTPS).
+- Prefer HTTPS (provided via Cloudflare Tunnel in production).
 - Rate limiting is enabled — tune limits as needed.
-- Avoid hard-coded credentials if you ever re-enable “default admin” logic.
+- Avoid hard-coded credentials if you ever re-enable "default admin" logic.
+- API responses use `user_return_schema`, which excludes the password hash. Always use this schema (not `user_schema`) for any endpoint returning user data.
 
 ---
 
