@@ -50,6 +50,9 @@ def create_user():
     if db.session.query(User).filter_by(user_name=data["user_name"]).first():
         return jsonify({"message": "Username already exists"}), 409
 
+    if db.session.query(User).filter_by(email=data["email"]).first():
+        return jsonify({"message": "Email already exists"}), 409
+
     data["password"] = generate_password_hash(data["password"])
     new_user = User(**data)
 
