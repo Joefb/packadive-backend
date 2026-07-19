@@ -28,7 +28,8 @@ def create_app(config_name):
     ma.init_app(app)  # This adds Marshmallow to the app.
     limiter.init_app(app)
     cache.init_app(app)
-    CORS(app)  # Enable CORS for all routes
+    # Scope CORS to only allow requests from the specified origins
+    CORS(app, origins=["https://www.packadive.com", "https://packadive.com"])
 
     # Create prefixed blueprint routes
     app.register_blueprint(user_bp, url_prefix="/user")
