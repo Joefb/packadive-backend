@@ -1,7 +1,7 @@
 # Imports
 from flask import Flask
 from .models import db
-from .extensions import ma, limiter, cache
+from .extensions import ma, limiter, cache, migrate
 from .blueprints.user import user_bp
 from .blueprints.checklist import checklist_bp
 from .blueprints.list_item import list_item_bp
@@ -28,6 +28,7 @@ def create_app(config_name):
     ma.init_app(app)  # This adds Marshmallow to the app.
     limiter.init_app(app)
     cache.init_app(app)
+    migrate.init_app(app, db)
     # Scope CORS to only allow requests from the specified origins
     CORS(app, origins=["https://www.packadive.com", "https://packadive.com"])
 
