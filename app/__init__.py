@@ -1,4 +1,5 @@
 # Imports
+import os
 from flask import Flask
 from .models import db
 from .extensions import ma, limiter, cache, migrate
@@ -29,8 +30,15 @@ def create_app(config_name):
     limiter.init_app(app)
     cache.init_app(app)
     migrate.init_app(app, db)
-    # Scope CORS to only allow requests from the specified origins
-    CORS(app, origins=["https://www.packadive.com", "https://packadive.com"])
+    # Scope CORS to only allow requests from the specified origins.
+    # CORS_ORIGINS overrides this (comma-separated) for local/dev use against
+    # a frontend dev server running on a non-prod origin; unset in prod.
+    cors_origins_env = os.environ.get("CORS_ORIGINS")
+    if cors_origins_env:
+        cors_origins = [origin.strip() for origin in cors_origins_env.split(",")]
+    else:
+        cors_origins = ["https://www.packadive.com", "https://packadive.com"]
+    CORS(app, origins=cors_origins)
 
     # Create prefixed blueprint routes
     app.register_blueprint(user_bp, url_prefix="/user")

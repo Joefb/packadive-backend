@@ -67,6 +67,6 @@ Each blueprint package follows the same shape: `__init__.py` creates the `Bluepr
 
 **Rate limiting** is per-route via `@limiter.limit(...)` decorators (Flask-Limiter, in-memory storage, default global limits `2000/day, 500/hour` set in `app/extensions.py`). Follow the existing convention of tighter limits on write/auth endpoints (e.g. login is `5 per minute`, user creation `3 per hour`) when adding new routes.
 
-**CORS** is scoped in `app/__init__.py` to `https://www.packadive.com` and `https://packadive.com` only — update that list, not a blanket `CORS(app)`, if a new frontend origin needs access.
+**CORS** is scoped in `app/__init__.py` to `https://www.packadive.com` and `https://packadive.com` only, overridable via the `CORS_ORIGINS` env var (comma-separated) for local testing against a frontend dev server — leave it unset in prod so the hardcoded list stays in force. Update the hardcoded list, not a blanket `CORS(app)`, if a new frontend origin needs *permanent* access.
 
 **Ownership checks**: checklist and list-item routes always scope queries by the authenticated user (`request.logged_in_id`), either directly (`filter_by(user_id=...)` for checklists) or by walking `ListItems.checklist_id → CheckList.user_id` (for list items, since `ListItems` has no direct `user_id`). Preserve this pattern for any new item/checklist routes to avoid IDOR-style access.
