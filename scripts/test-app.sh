@@ -18,6 +18,7 @@ case "$1" in
       --network "$NETWORK" \
       -e SECRET_KEY="${SECRET_KEY:-dev-secret}" \
       -e SQLALCHEMY_DATABASE_URI="postgresql://$DB_USER:$DB_PASSWORD@$DB_CONTAINER_NAME:5432/$DB_NAME" \
+      -e CORS_ORIGINS="${TEST_CORS_ORIGINS:-}" \
       -p "$APP_PORT:8000" \
       "$IMAGE_NAME"
     ;;

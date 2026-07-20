@@ -210,11 +210,21 @@ Schema changes are tracked with Flask-Migrate (Alembic) — `flask db upgrade` a
 
 ## CORS
 
-CORS is enabled in the Flask app (via `flask_cors.CORS(app)`), allowing the Vercel frontend to call the API.
+CORS is scoped in `app/__init__.py` to `https://www.packadive.com` and `https://packadive.com` only.
 
-If you ever want to restrict origins (more secure), configure CORS to only allow:
+For local testing against a frontend dev server (which runs on a different origin, e.g. `http://localhost:3000`), set `CORS_ORIGINS` (comma-separated) to override the allowed list — leave it unset in prod so it stays locked to the two real origins:
 
-- `https://packadive.vercel.app`
+```bash
+export CORS_ORIGINS=http://localhost:3000
+flask run
+```
+
+With `scripts/test-app.sh`, set `TEST_CORS_ORIGINS` before `up` instead:
+
+```bash
+export TEST_CORS_ORIGINS=http://localhost:3000
+./scripts/test-app.sh up
+```
 
 ---
 
