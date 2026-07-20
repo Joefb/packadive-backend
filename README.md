@@ -18,6 +18,8 @@
 - [Main Routes (High Level)](#main-routes-high-level)
 - [Database Schema (High Level)](#database-schema-high-level)
 - [Local Development](#local-development)
+- [Local Test Database](#local-test-database)
+- [Database Migrations](#database-migrations)
 - [CORS](#cors)
 - [End-to-End Run (Frontend + Backend)](#end-to-end-run-frontend--backend)
 - [Production](#production)
@@ -120,7 +122,7 @@ Base paths (registered as Flask blueprints):
 ### Prerequisites
 
 - Python 3.8+
-- (Optional) PostgreSQL if you want to run against Postgres locally
+- (Optional) Podman, if you want to run against Postgres locally via `scripts/test-db.sh`
 
 ### Setup
 
@@ -140,25 +142,69 @@ pip install -r requirements.txt
 
 #### Database
 
-This project supports SQLite by default for development, and Postgres in production.
+This project supports SQLite by default for development, and Postgres in production (and, optionally, for local development too — see [Local Test Database](#local-test-database)).
 
 **Important note about variable names:**
 
 - Some docs refer to `DATABASE_URL`
-- The current `config.py` uses `SQLALCHEMY_DATABASE_URI` (especially in `ProductionConfig`)
+- The current `config.py` uses `SQLALCHEMY_DATABASE_URI` (especially in `ProductionConfig` and `DevelopmentConfig`)
 
 Recommended dev env:
 
 ```bash
 export SECRET_KEY=dev-secret
+export FLASK_APP=wsgi.py
+# optional — omit to fall back to sqlite:///app.db
 export SQLALCHEMY_DATABASE_URI=sqlite:///app.db
 ```
 
 Run:
 
 ```bash
-python planadive.py
+flask run
 ```
+
+`FLASK_CONFIG` selects which config class from `config.py` to load and defaults to `DevelopmentConfig` (set `FLASK_CONFIG=ProductionConfig`, etc. to override).
+
+---
+
+## Local Test Database
+
+For dev/testing against the same database engine as production, spin up an isolated local Postgres container — its own container name, port, and Podman network (`packadive-test-net`), fully separate from whatever prod's network is named:
+
+```bash
+./scripts/test-db.sh up      # start (also creates the packadive-test-net network)
+./scripts/test-db.sh down    # stop and remove
+./scripts/test-db.sh reset   # recreate from scratch
+```
+
+Defaults to `postgresql://packadive:packadive@localhost:5433/packadive_test` (override via `TEST_DB_PORT` / `TEST_DB_NAME` / `TEST_DB_USER` / `TEST_DB_PASSWORD`). Point `SQLALCHEMY_DATABASE_URI` at it:
+
+```bash
+export SQLALCHEMY_DATABASE_URI=postgresql://packadive:packadive@localhost:5433/packadive_test
+flask db upgrade   # apply migrations
+flask run
+```
+
+### Running the backend itself in a container (matches prod)
+
+Rather than running `flask run` on bare metal, you can build and run the actual production image (same `Dockerfile`/`entrypoint.sh`) against the test Postgres container, on the same `packadive-test-net` network:
+
+```bash
+./scripts/test-db.sh up          # if not already running
+./scripts/test-app.sh build      # podman build from the repo's Dockerfile
+./scripts/test-app.sh up         # runs entrypoint.sh: flask db upgrade, then gunicorn on :8000
+./scripts/test-app.sh logs       # follow container logs
+./scripts/test-app.sh down       # stop and remove
+```
+
+This exercises the exact same `flask db upgrade` → Gunicorn startup path prod uses, so it's the closest local approximation to production. Override `SECRET_KEY` or the `TEST_DB_*` vars the same way as above; `TEST_APP_PORT` (default `8000`) controls the host port the container is published on.
+
+---
+
+## Database Migrations
+
+Schema changes are tracked with Flask-Migrate (Alembic) — `flask db upgrade` applies pending migrations, `flask db migrate -m "..."` autogenerates a new one from model changes (diff it against an empty database, e.g. the local test container above, so the generated migration reflects the real change rather than a no-op against an already-up-to-date dev DB). `entrypoint.sh` runs `flask db upgrade` automatically before starting Gunicorn in production.
 
 ---
 
@@ -197,7 +243,7 @@ Then:
 1) Start backend:
 
 ```bash
-python planadive.py
+flask run
 ```
 
 1) Start frontend:
@@ -230,13 +276,13 @@ The image is built from the included `Dockerfile`:
 podman build -t packadive-backend:latest .
 ```
 
-`entrypoint.sh` runs once on container start to create tables via `planadive.py`, then hands off to Gunicorn:
+`entrypoint.sh` runs `flask db upgrade` once on container start to apply any pending migrations, then hands off to Gunicorn:
 
 ```bash
 gunicorn -w 4 -b 0.0.0.0:8000 "app:create_app('ProductionConfig')"
 ```
 
-> Note: `planadive.py` creates tables on startup rather than using migrations. That's fine for a project at this scale; larger systems typically use migrations in CI/CD.
+> Note: the prod database was originally created via SQLAlchemy's `db.create_all()`, before Flask-Migrate was introduced. The first time this migrations-based `entrypoint.sh` ships to prod, the prod DB must be stamped with the baseline migration (`flask db stamp head` against the prod `SQLALCHEMY_DATABASE_URI`, run manually) *before* the deploy — otherwise `flask db upgrade` will try to create tables that already exist and the container will fail to start.
 
 ### Auto-deploy
 
@@ -260,8 +306,12 @@ packadive-backend/
 │   ├── util/                # auth utilities, helpers
 │   └── static/              # Swagger specs, etc. (optional)
 ├── instance/
+├── migrations/               # Flask-Migrate / Alembic migrations
+├── scripts/
+│   ├── test-db.sh             # local test Postgres container (up/down/reset)
+│   └── test-app.sh            # build/run the backend image against it (build/up/down/logs)
 ├── config.py
-├── planadive.py
+├── wsgi.py                   # FLASK_APP entrypoint (flask run / flask db ...)
 ├── requirements.txt
 └── README.md
 ```
