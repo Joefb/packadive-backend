@@ -170,10 +170,10 @@ flask run
 
 ## Local Test Database
 
-For dev/testing against the same database engine as production, spin up an isolated local Postgres container (separate from prod — its own container name, port, and no shared network):
+For dev/testing against the same database engine as production, spin up an isolated local Postgres container — its own container name, port, and Podman network (`packadive-test-net`), fully separate from whatever prod's network is named:
 
 ```bash
-./scripts/test-db.sh up      # start
+./scripts/test-db.sh up      # start (also creates the packadive-test-net network)
 ./scripts/test-db.sh down    # stop and remove
 ./scripts/test-db.sh reset   # recreate from scratch
 ```
@@ -185,6 +185,20 @@ export SQLALCHEMY_DATABASE_URI=postgresql://packadive:packadive@localhost:5433/p
 flask db upgrade   # apply migrations
 flask run
 ```
+
+### Running the backend itself in a container (matches prod)
+
+Rather than running `flask run` on bare metal, you can build and run the actual production image (same `Dockerfile`/`entrypoint.sh`) against the test Postgres container, on the same `packadive-test-net` network:
+
+```bash
+./scripts/test-db.sh up          # if not already running
+./scripts/test-app.sh build      # podman build from the repo's Dockerfile
+./scripts/test-app.sh up         # runs entrypoint.sh: flask db upgrade, then gunicorn on :8000
+./scripts/test-app.sh logs       # follow container logs
+./scripts/test-app.sh down       # stop and remove
+```
+
+This exercises the exact same `flask db upgrade` → Gunicorn startup path prod uses, so it's the closest local approximation to production. Override `SECRET_KEY` or the `TEST_DB_*` vars the same way as above; `TEST_APP_PORT` (default `8000`) controls the host port the container is published on.
 
 ---
 
@@ -294,7 +308,8 @@ packadive-backend/
 ├── instance/
 ├── migrations/               # Flask-Migrate / Alembic migrations
 ├── scripts/
-│   └── test-db.sh            # local test Postgres container (up/down/reset)
+│   ├── test-db.sh             # local test Postgres container (up/down/reset)
+│   └── test-app.sh            # build/run the backend image against it (build/up/down/logs)
 ├── config.py
 ├── wsgi.py                   # FLASK_APP entrypoint (flask run / flask db ...)
 ├── requirements.txt
