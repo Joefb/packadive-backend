@@ -1,4 +1,4 @@
-from app.models import db, CheckList
+from app.models import db, CheckList, Trip
 from .schemas import checklist_schema, checklists_schema
 from app.blueprints.checklist import checklist_bp
 from flask import request, jsonify
@@ -25,6 +25,15 @@ def create_checklist():
 
     current_user_id = request.logged_in_id
 
+    trip = (
+        db.session.query(Trip)
+        .filter_by(id=data["trip_id"], user_id=current_user_id)
+        .first()
+    )
+
+    if not trip:
+        return jsonify({"message": "Trip not found"}), 404
+
     if (
         db.session.query(CheckList)
         .filter_by(checklist_name=data["checklist_name"], user_id=current_user_id)
@@ -33,7 +42,9 @@ def create_checklist():
         return jsonify({"message": "Check list with this name already exists"}), 409
 
     new_checklist = CheckList(
-        checklist_name=data["checklist_name"], user_id=current_user_id
+        checklist_name=data["checklist_name"],
+        user_id=current_user_id,
+        trip_id=data["trip_id"],
     )
 
     db.session.add(new_checklist)
@@ -59,7 +70,9 @@ def get_checklists():
 @limiter.limit("60 per hour")
 def update_checklist(checklist_id):
     try:
-        data = checklist_schema.load(request.json)
+        # trip_id stays out of scope for renaming this round (no move-checklist
+        # feature yet), so don't require it on this load.
+        data = checklist_schema.load(request.json, partial=("trip_id",))
     except ValidationError as err:
         return jsonify(err.messages), 400
 

@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import Boolean, String, ForeignKey
 
 
 # Create a base class for our models
@@ -25,6 +25,21 @@ class User(Base):
     checklists: Mapped[list["CheckList"]] = relationship(
         "CheckList", back_populates="user"
     )
+    trips: Mapped[list["Trip"]] = relationship("Trip", back_populates="user")
+
+
+class Trip(Base):
+    __tablename__ = "trips"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    trip_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+    # Relationships
+    user: Mapped["User"] = relationship("User", back_populates="trips")
+    checklists: Mapped[list["CheckList"]] = relationship(
+        "CheckList", back_populates="trip", cascade="all, delete-orphan"
+    )
 
 
 class CheckList(Base):
@@ -33,11 +48,16 @@ class CheckList(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     checklist_name: Mapped[str] = mapped_column(String(100), nullable=False)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    trip_id: Mapped[int] = mapped_column(ForeignKey("trips.id"), nullable=False)
+    favorite: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
 
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="checklists")
+    trip: Mapped["Trip"] = relationship("Trip", back_populates="checklists")
     list_items: Mapped[list["ListItems"]] = relationship(
-        "ListItems", back_populates="checklist_items"
+        "ListItems", back_populates="checklist_items", cascade="all, delete-orphan"
     )
 
 

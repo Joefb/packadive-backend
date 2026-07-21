@@ -6,6 +6,7 @@ from .extensions import ma, limiter, cache, migrate
 from .blueprints.user import user_bp
 from .blueprints.checklist import checklist_bp
 from .blueprints.list_item import list_item_bp
+from .blueprints.trip import trip_bp
 from flask_cors import CORS
 
 ## Swagger Setup
@@ -44,6 +45,7 @@ def create_app(config_name):
     app.register_blueprint(user_bp, url_prefix="/user")
     app.register_blueprint(checklist_bp, url_prefix="/checklists")
     app.register_blueprint(list_item_bp, url_prefix="/list_item")
+    app.register_blueprint(trip_bp, url_prefix="/trips")
     # app.register_blueprint(swagger_blueprint, url_prefix=SWAGGER_URL)
 
     # This creates the admin user if it does not exist.
